@@ -1,0 +1,61 @@
+[package]
+name = "dynamic-hibernate"
+version = "0.2.0"
+edition = "2021"
+authors = ["Malik"]
+license = "GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL"
+description = "Dynamic hibernation swap manager for Linux"
+
+# ── CLI ──────────────────────────────────────────────────────────────────────
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+
+# ── Error handling ────────────────────────────────────────────────────────────
+anyhow = "1.0"
+
+# ── Serialisation (swap metadata on disk) ─────────────────────────────────────
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# ── Linux /proc/* interfaces ──────────────────────────────────────────────────
+# Typed /proc/meminfo struct. Used in production by TiKV/rust-prometheus.
+procfs = { version = "0.17", default-features = false }
+
+# ── Linux syscalls / uid check ────────────────────────────────────────────────
+# Only the "user" feature is needed: Uid::effective().is_root().
+# swapon/swapoff are invoked via Command (simpler, avoids feature-flag churn).
+nix = { version = "0.30", default-features = false, features = ["user", "fs"] }
+
+# ── Structured logging → systemd-journald ────────────────────────────────────
+# Pure-Rust journald layer; no libsystemd C dependency.
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt"] }
+tracing-journald = "0.3"
+
+# ── Executable pre-flight checks ─────────────────────────────────────────────
+# Used by cargo itself to locate executables in PATH.
+which = "7"
+
+# ── D-Bus ─────────────────────────────────────────────────────────────────────
+# Pure-Rust, no libdbus C dependency. Used by GNOME NetworkManager, KDE Powerdevil.
+zbus = { version = "4", default-features = false, features = ["tokio"] }
+
+# ── Async runtime (required by zbus) ─────────────────────────────────────────
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "time"] }
+
+# ── Stream combinators (for zbus MessageStream) ───────────────────────────────
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+
+# ── Desktop notifications via org.freedesktop.Notifications ──────────────────
+# zbus backend: consistent with the rest of the D-Bus stack, no libdbus.
+notify-rust = { version = "4", default-features = false, features = ["z-with-tokio"] }
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+[[bin]]
+name = "dynamic-hibernate"
+path = "src/bin/dynamic-hibernate.rs"
+
+[[bin]]
+name = "dynamic-hibernate-notifier"
+path = "src/bin/dynamic-hibernate-notifier.rs"

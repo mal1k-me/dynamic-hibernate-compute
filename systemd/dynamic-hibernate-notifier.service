@@ -1,0 +1,33 @@
+# User-session service — install in /usr/lib/systemd/user/
+# Enabled per-user, NOT as a system unit.
+
+[Unit]
+Description=Dynamic Hibernation Error Notifier
+Documentation=https://invent.kde.org/plasma/dynamic-hibernate
+
+# Wait for the graphical session and D-Bus session bus to be available.
+After=graphical-session.target dbus.service
+Requires=dbus.service
+
+# Tie lifetime to the graphical session: stop when the session ends.
+PartOf=graphical-session.target
+
+# No dependency on dynamic-hibernate-prepare.service — the notifier is a
+# passive listener. Adding Wants= here would incorrectly trigger the prepare
+# service at every login.
+
+[Service]
+Type=simple
+
+ExecStart=/usr/lib/dynamic-hibernate/dynamic-hibernate-notifier
+
+# Restart on crash with a short back-off. The notifier is stateless so
+# restart is always safe.
+Restart=on-failure
+RestartSec=2s
+
+# The notifier only needs the session D-Bus and notification daemon.
+# No special privileges required.
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,38 @@
+[Unit]
+Description=Prepare Dynamic Hibernation Swapfile
+Documentation=https://invent.kde.org/plasma/dynamic-hibernate
+
+# Only /var must be mounted — /var/lib/dynamic-hibernate is created by StateDirectory.
+RequiresMountsFor=/var
+
+Before=systemd-hibernate.service
+Before=hibernate.target
+Before=suspend-then-hibernate.target
+
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+
+# systemd creates /var/lib/dynamic-hibernate before namespace setup and before
+# ExecStart runs. This is the correct systemd-native way to ensure the directory
+# exists inside a hardened namespace without requiring it to pre-exist on disk.
+StateDirectory=dynamic-hibernate
+StateDirectoryMode=0700
+
+ExecStart=/usr/lib/dynamic-hibernate/dynamic-hibernate create
+
+# Hardening
+ProtectSystem=strict
+ReadWritePaths=/var/lib/dynamic-hibernate /sys/power /sys/kernel/debug/zswap
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+# Uncomment to raise log verbosity:
+# Environment=DYNAMIC_HIBERNATE_LOG=debug
+
+[Install]
+WantedBy=hibernate.target
+WantedBy=suspend-then-hibernate.target

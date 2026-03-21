@@ -1,0 +1,30 @@
+[Unit]
+Description=Clean Up Dynamic Hibernation Swapfile
+Documentation=https://invent.kde.org/plasma/dynamic-hibernate
+
+RequiresMountsFor=/var
+
+# Run after the kernel has fully cleared the hibernate image from swap,
+# so the swapfile is no longer in use by the resume path.
+After=systemd-hibernate-clear.service
+Wants=systemd-hibernate-clear.service
+
+# Only run if we actually created a swapfile during the prepare phase.
+ConditionPathExists=/var/lib/dynamic-hibernate/.dynamic-hibernate.metadata
+
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+
+ExecStart=/usr/lib/dynamic-hibernate/dynamic-hibernate cleanup
+
+ProtectSystem=strict
+ReadWritePaths=/var/dynamic-hibernate /sys/power
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=systemd-hibernate-clear.service
